@@ -1,19 +1,37 @@
 #!/usr/bin/python3
-"""Exports to-do list information for a given employee ID to JSON format."""
+'''
+gathers information about an employee by ID and returns their TODO progress
+'''
 import json
+from collections import OrderedDict
 import requests
 import sys
 
-if __name__ == "__main__":
-    user_id = sys.argv[1]
-    url = "https://jsonplaceholder.typicode.com/"
-    user = requests.get(url + "users/{}".format(user_id)).json()
-    username = user.get("username")
-    todos = requests.get(url + "todos", params={"userId": user_id}).json()
 
-    with open("{}.json".format(user_id), "w") as jsonfile:
-        json.dump({user_id: [{
-                "task": t.get("title"),
-                "completed": t.get("completed"),
-                "username": username
-            } for t in todos]}, jsonfile)
+def get_user_todo():
+    '''
+    get user todo
+    '''
+    emp = requests.get('https://jsonplaceholder.typicode.com/users/{}'
+                       .format(sys.argv[1]))
+    name = emp.json().get('username')
+    tasks = requests.get('https://jsonplaceholder.typicode.com/todos?userId={}'
+                         .format(sys.argv[1]))
+    tasks = tasks.json()
+    res = []
+    final_id = OrderedDict()
+    filename = sys.argv[1] + ".json"
+
+    with open(filename, 'w+') as f:
+        for task in tasks:
+            final = OrderedDict()
+            final['task'] = task['title']
+            final['completed'] = task['completed']
+            final['username'] = name
+            res.append(final)
+        final_id[sys.argv[1]] = res
+        json.dump(final_id, f)
+
+
+if __name__ == "__main__":
+    get_user_todo()
